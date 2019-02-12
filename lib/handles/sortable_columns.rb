@@ -1,4 +1,4 @@
-module Handles  #:nodoc:
+module Handles #:nodoc:
   # == Overview
   #
   # A sortable columns feature for your controller and views.
@@ -30,7 +30,7 @@ module Handles  #:nodoc:
   # * MetaClassMethods#handles_sortable_columns
   # * InstanceMethods#sortable_column_order
   module SortableColumns
-    def self.included(owner)    #:nodoc:
+    def self.included(owner) #:nodoc:
       owner.extend MetaClassMethods
     end
 
@@ -72,15 +72,15 @@ module Handles  #:nodoc:
 
       def initialize(attrs = {})
         defaults = {
-          :link_class => "SortableColumnLink",
-          :indicator_class => {:asc => "SortedAsc", :desc => "SortedDesc"},
-          :indicator_text => {:asc => "&nbsp;&darr;&nbsp;", :desc => "&nbsp;&uarr;&nbsp;"},
-          :page_param => "page",
-          :sort_param => "sort",
-          :default_sort_value => nil
+          link_class: 'SortableColumnLink',
+          indicator_class: { asc: 'SortedAsc', desc: 'SortedDesc' },
+          indicator_text: { asc: '&nbsp;&darr;&nbsp;', desc: '&nbsp;&uarr;&nbsp;' },
+          page_param: 'page',
+          sort_param: 'sort',
+          default_sort_value: nil
         }
 
-        defaults.merge(attrs).each {|k, v| send("#{k}=", v)}
+        defaults.merge(attrs).each { |k, v| send("#{k}=", v) }
       end
 
       # Bracket access for convenience.
@@ -123,16 +123,16 @@ module Handles  #:nodoc:
       # NOTE: <tt>conf</tt> is a Config object.
       def handles_sortable_columns(fopts = {}, &block)
         # Multiple activation protection.
-        if not self < InstanceMethods
+        unless self < InstanceMethods
           include InstanceMethods
           helper_method :sortable_column
         end
 
         # Process configuration at every activation.
-        before_filter(fopts) do |ac|
+        before_action(fopts) do |ac|
           ac.instance_eval do
             # NOTE: Can't `yield`, we're in a block already.
-            block.call(sortable_columns_config) if block
+            block.call(sortable_columns_config) if block # rubocop:disable Performance/RedundantBlockCall
           end
         end
       end
@@ -146,11 +146,11 @@ module Handles  #:nodoc:
       #   parse_sortable_column_sort_param("name")    # => {:column => "name", :direction => :asc}
       #   parse_sortable_column_sort_param("-name")   # => {:column => "name", :direction => :desc}
       #   parse_sortable_column_sort_param("")        # => {:column => nil, :direction => nil}
-      def parse_sortable_column_sort_param(sort)    #:nodoc:
-        out = {:column => nil, :direction => nil}
-        if sort.to_s.strip.match /\A((?:-|))([^-]+)\z/
-          out[:direction] = $1.empty?? :asc : :desc
-          out[:column] = $2.strip
+      def parse_sortable_column_sort_param(sort) #:nodoc:
+        out = { column: nil, direction: nil }
+        if sort.to_s.strip =~ /\A((?:-|))([^-]+)\z/
+          out[:direction] = Regexp.last_match(1).empty? ? :asc : :desc
+          out[:column] = Regexp.last_match(2).strip
         end
         out
       end
@@ -170,7 +170,7 @@ module Handles  #:nodoc:
       #   <%= sortable_column "Highest Price", :column => "max_price" %>
       #   <%= sortable_column "Name", :link_class => "SortableLink" %>
       #   <%= sortable_column "Created At", :direction => :asc %>
-      def sortable_column(title, options = {})    #:doc:
+      def sortable_column(title, options = {}) #:doc:
         options = options.dup
         o = {}
         conf = {}
@@ -180,16 +180,16 @@ module Handles  #:nodoc:
         conf[k = :indicator_text] = sortable_columns_config[k]
         conf[k = :indicator_class] = sortable_columns_config[k]
 
-        #HELP sortable_column
+        # HELP sortable_column
         o[k = :column] = options.delete(k) || sortable_column_title_to_name(title)
         o[k = :direction] = options.delete(k).to_s.downcase =~ /\Adesc\z/ ? :desc : :asc
         o[k = :link_class] = options.delete(k) || sortable_columns_config[k]
         o[k = :link_style] = options.delete(k)
         o[k = :link_style] = options.delete(k)
         o[k = :route_proxy] = options.delete(k)
-        #HELP /sortable_column
+        # HELP /sortable_column
 
-        raise "Unknown option(s): #{options.inspect}" if not options.empty?
+        raise "Unknown option(s): #{options.inspect}" unless options.empty?
 
         # Parse sort param.
         sort = params[conf[:sort_param]] || conf[:default_sort_value]
@@ -201,7 +201,7 @@ module Handles  #:nodoc:
         end
 
         # If already sorted and indicator class defined, append it.
-        if pp[:column] == o[:column].to_s and (s = conf[:indicator_class][pp[:direction]]).present?
+        if (pp[:column] == o[:column].to_s) && (s = conf[:indicator_class][pp[:direction]]).present?
           css_class << s
         end
 
@@ -209,7 +209,7 @@ module Handles  #:nodoc:
         pcs = []
 
         html_options = {}
-        html_options[:class] = css_class.join(" ") if css_class.present?
+        html_options[:class] = css_class.join(' ') if css_class.present?
         html_options[:style] = o[:link_style] if o[:link_style].present?
 
         # Rails 3 / Rails 2 fork.
@@ -218,11 +218,11 @@ module Handles  #:nodoc:
         # Already sorted?
         if pp[:column] == o[:column].to_s
           if o[:route_proxy]
-            url = o[:route_proxy].send(:url_for, params.merge({conf[:sort_param] => [("-" if pp[:direction] == :asc), o[:column]].join, conf[:page_param] => 1}))
+            url = o[:route_proxy].send(:url_for, params.merge(conf[:sort_param] => [('-' if pp[:direction] == :asc), o[:column]].join, conf[:page_param] => 1))
           else
-            url = url_for(params.merge({conf[:sort_param] => [("-" if pp[:direction] == :asc), o[:column]].join, conf[:page_param] => 1}))
+            url = url_for(params.merge(conf[:sort_param] => [('-' if pp[:direction] == :asc), o[:column]].join, conf[:page_param] => 1))
           end
-          pcs << tpl.link_to(title, url, html_options)       # Opposite sort order when clicked.
+          pcs << tpl.link_to(title, url, html_options) # Opposite sort order when clicked.
 
           # Append indicator, if configured.
           if (s = conf[:indicator_text][pp[:direction]]).present?
@@ -231,9 +231,9 @@ module Handles  #:nodoc:
         else
           # Not sorted.
           if o[:route_proxy]
-            url = o[:route_proxy].send(:url_for, params.merge({conf[:sort_param] => [("-" if o[:direction] != :asc), o[:column]].join, conf[:page_param] => 1}))
+            url = o[:route_proxy].send(:url_for, params.merge(conf[:sort_param] => [('-' if o[:direction] != :asc), o[:column]].join, conf[:page_param] => 1))
           else
-            url = url_for(params.merge({conf[:sort_param] => [("-" if o[:direction] != :asc), o[:column]].join, conf[:page_param] => 1}))
+            url = url_for(params.merge(conf[:sort_param] => [('-' if o[:direction] != :asc), o[:column]].join, conf[:page_param] => 1))
           end
           pcs << tpl.link_to(title, url, html_options)
         end
@@ -277,29 +277,25 @@ module Handles  #:nodoc:
         sort = params[conf[:sort_param]] || conf[:default_sort_value]
         pp = parse_sortable_column_sort_param(sort)
 
-        order = if block
-          column, direction = pp[:column], pp[:direction]
-          yield(column, direction)    # NOTE: Makes RDoc/ri look a little smarter.
-        else
+        if block
+          column = pp[:column]
+          direction = pp[:direction]
+          yield(column, direction) # NOTE: Makes RDoc/ri look a little smarter.
+        elsif pp[:column]
           # No block -- do a straight mapping.
-          if pp[:column]
-            [pp[:column], pp[:direction]].join(" ")
-          end
+          [pp[:column], pp[:direction]].join(' ')
         end
-
-        # Can be nil.
-        order
       end
 
       # Internal use only. Convert title to sortable column name.
       #
       #   sortable_column_title_to_name("ProductName")  # => "product_name"
-      def sortable_column_title_to_name(title)    #:nodoc:
-        title.gsub(/(\s)(\S)/) {$2.upcase}.underscore
+      def sortable_column_title_to_name(title) #:nodoc:
+        title.gsub(/(\s)(\S)/) { Regexp.last_match(2).upcase }.underscore
       end
 
       # Internal use only. Access/initialize feature's config.
-      def sortable_columns_config   #:nodoc:
+      def sortable_columns_config #:nodoc:
         @sortable_columns_config ||= ::Handles::SortableColumns::Config.new
       end
     end # InstanceMethods
